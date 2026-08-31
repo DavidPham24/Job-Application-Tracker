@@ -5,28 +5,55 @@ function App() {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // editing state.
     const [applicationToEdit, setApplicationToEdit] = useState(null);
+    // search filter states.
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
 
+
+    // Fetch applications from the server when the component mounts or when search/statusFilter changes.
     useEffect(() => {
-        fetch("/api/applications")
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Failed to fetch applications");
+        const fetchApplications = async () => {
+            try {
+                const params = new URLSearchParams();
+
+                if (search) {
+                    params.append("search", search);
                 }
 
-                return response.json();
-            })
-            .then((data) => {
+                if (statusFilter) {
+                    params.append("status", statusFilter);
+                }
+
+                const queryString = params.toString();
+
+                const response = await fetch(
+                    `/api/applications?${queryString}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Failed to fetch applications"
+                    );
+                }
+
+                const data = await response.json();
+
                 setApplications(data);
                 setLoading(false);
-            })
-            .catch((error) => {
+            } catch (error) {
                 console.error(error);
                 setError("Could not load applications.");
                 setLoading(false);
-            });
-    }, []);
+            }
+        };
 
+        fetchApplications();
+    }, [search, statusFilter]); // tells React to run this effect again whenever search or statusFilter changes.
+
+
+    // Render loading or error messages if applicable.
     if (loading) {
         return <p>Loading applications...</p>;
     }
@@ -107,6 +134,34 @@ function App() {
                 onApplicationUpdated={handleApplicationUpdated}
                 onCancelEdit={handleCancelEdit}
             />
+
+
+            <div className="filters">
+                <input
+                    type="text"
+                    placeholder="Search company or position..."
+                    value={search}
+                    onChange={(event) =>
+                        setSearch(event.target.value)
+                    }
+                />
+
+                <select
+                    value={statusFilter}
+                    onChange={(event) =>
+                        setStatusFilter(event.target.value)
+                    }
+                >
+                    <option value="">All Statuses</option>
+                    <option value="Saved">Saved</option>
+                    <option value="Applied">Applied</option>
+                    <option value="OA">OA</option>
+                    <option value="Interview">Interview</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Offer">Offer</option>
+                </select>
+            </div>
+
 
             <p>
                 You have {applications.length} applications.

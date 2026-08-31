@@ -1,10 +1,42 @@
 const pool = require("../db");
 
 // Get all applications, newest first.
-async function getAllApplications() {
-    const result = await pool.query(
-        "SELECT * FROM applications ORDER BY created_at DESC"
-    );
+async function getAllApplications({ search, status }) {
+    // Start building the SQL query to select all applications. The "WHERE 1 = 1" condition is a common technique to simplify adding additional conditions later.
+    let query = `
+        SELECT *
+        FROM applications
+        WHERE 1 = 1
+    `;
+
+    const values = []; // This array will hold the values for parameterized queries to prevent SQL injection.
+
+    // If a search term is provided, add it to the values array and modify the query to filter applications by company or position using a case-insensitive match (ILIKE).
+    if (search) { 
+        values.push(`%${search}%`); // Wrapped in % for partial matching, values.length is now 1 for the first parameter placeholder ($1).
+
+        // filter for search term in company or position, using ILIKE for case-insensitive matching.
+        query += `
+            AND (
+                company ILIKE $${values.length}
+                OR position ILIKE $${values.length}
+            )
+        `;
+    }
+
+    if (status) {
+        values.push(status);
+
+        query += `
+            AND status = $${values.length}
+        `;
+    }
+
+    query += `
+        ORDER BY created_at DESC
+    `;
+
+    const result = await pool.query(query, values);
 
     return result.rows;
 }

@@ -31,7 +31,7 @@ function ApplicationForm({
                 url: applicationToEdit.url || "",
                 notes: applicationToEdit.notes || ""
             });
-        } else { // Reset form data to empty values when not editing.
+        } else { // Reset form data to empty values when not editing (i.e., when adding a new application or canceling an edit).
             setFormData({
                 company: "",
                 position: "",

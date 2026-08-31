@@ -33,13 +33,19 @@ app.get("/api/health", async (req, res) => {
 // API route to get all applications.
 app.get("/api/applications", async (req, res) => {
     try {
-        const result = await applications.getAllApplications();
+        const { search, status } = req.query;
+
+        const result = await applications.getAllApplications({
+            search,
+            status
+        });
 
         res.json(result);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ 
-            error: "Failed to retrieve applications" 
+
+        res.status(500).json({
+            error: "Failed to retrieve applications"
         });
     }
 });

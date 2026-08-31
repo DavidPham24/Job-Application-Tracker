@@ -48,6 +48,24 @@ form button {
     cursor: pointer;
 }
 
+/* Styling for search and filter */
+.filters {
+    max-width: 900px;
+    margin: 20px auto;
+    display: flex;
+    gap: 12px;
+}
+
+.filters input,
+.filters select {
+    padding: 10px;
+    font-size: 16px;
+}
+
+.filters input {
+    flex: 1;
+}
+
 /* Styling for the applications list */
 .applications {
     display: flex;
