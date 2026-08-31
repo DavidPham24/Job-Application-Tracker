@@ -1,16 +1,50 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-function ApplicationForm({ onApplicationAdded }) {
+// component works for both creating and editing applications.
+function ApplicationForm({ 
+    onApplicationAdded,
+    applicationToEdit,
+    onApplicationUpdated,
+    onCancelEdit
+}) {
+
+    // Initialize form state with either the applicationToEdit values (if editing) or empty values (if creating a new application).
     const [formData, setFormData] = useState({
-        company: "",
-        position: "",
-        status: "Saved",
-        application_date: "",
-        deadline: "",
-        url: "",
-        notes: ""
+        company: applicationToEdit?.company || "",
+        position: applicationToEdit?.position || "",
+        status: applicationToEdit?.status || "Saved",
+        application_date: applicationToEdit?.application_date || "",
+        deadline: applicationToEdit?.deadline || "",
+        url: applicationToEdit?.url || "",
+        notes: applicationToEdit?.notes || ""
     });
 
+    // This useEffect hook is used to update the form data when the applicationToEdit prop changes. It ensures that the form fields are populated with the correct values when editing an existing application.
+    useEffect(() => {
+        if (applicationToEdit) {
+            setFormData({
+                company: applicationToEdit.company || "",
+                position: applicationToEdit.position || "",
+                status: applicationToEdit.status || "Saved",
+                application_date: applicationToEdit.application_date || "",
+                deadline: applicationToEdit.deadline || "",
+                url: applicationToEdit.url || "",
+                notes: applicationToEdit.notes || ""
+            });
+        } else { // Reset form data to empty values when not editing.
+            setFormData({
+                company: "",
+                position: "",
+                status: "Saved",
+                application_date: "",
+                deadline: "",
+                url: "",
+                notes: ""
+            });
+        }
+    }, [applicationToEdit]);
+
+    
     const handleChange = (event) => {
         const { name, value } = event.target;
 
@@ -23,11 +57,17 @@ function ApplicationForm({ onApplicationAdded }) {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
-        // Connects adding a form with API via requests.
+        // Connects editing/creating a form with API via requests.
         try {
-            // Send a POST request with form data as JSON.
-            const response = await fetch("/api/applications", {
-                method: "POST",
+            // If applicationToEdit exists, use PUT. Else, use POST. Send form data as JSON.
+            const url = applicationToEdit
+                ? `/api/applications/${applicationToEdit.id}`
+                : "/api/applications";
+
+            const method = applicationToEdit ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method,
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -35,15 +75,19 @@ function ApplicationForm({ onApplicationAdded }) {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to create application");
+                throw new Error("Failed to save application");
             }
 
-            const newApplication = await response.json();
+            const savedApplication = await response.json();
 
-            // If POST request successful, prop callback with the new application.
-            onApplicationAdded(newApplication);
+            // Call the appropriate prop callback function based on whether the form is in edit mode.
+            if (applicationToEdit) {
+                onApplicationUpdated(savedApplication);
+            } else {
+                onApplicationAdded(savedApplication);
+            }
 
-            // Reset the form to empty values.
+            // Reset form data to empty values after submission.
             setFormData({
                 company: "",
                 position: "",
@@ -60,7 +104,9 @@ function ApplicationForm({ onApplicationAdded }) {
 
     return (
         <form onSubmit={handleSubmit}>
-            <h2>Add Application</h2>
+            <h2>
+                {applicationToEdit ? "Edit Application" : "Add Application"}
+            </h2>
 
             <label>
                 Company
@@ -140,8 +186,18 @@ function ApplicationForm({ onApplicationAdded }) {
             </label>
 
             <button type="submit">
-                Add Application
+                {applicationToEdit ? "Save Changes" : "Add Application"}
             </button>
+
+            {applicationToEdit && (
+                <button
+                    type="button"
+                    onClick={onCancelEdit}
+                >
+                    Cancel
+                </button>
+            )}
+
         </form>
     );
 }

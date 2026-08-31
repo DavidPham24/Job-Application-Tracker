@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import ApplicationForm from "./components/applicationForm";
+import ApplicationForm from "./components/ApplicationForm";
 
 function App() {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [applicationToEdit, setApplicationToEdit] = useState(null);
 
     useEffect(() => {
         fetch("/api/applications")
@@ -43,7 +44,7 @@ function App() {
         ]);
     };
 
-    // Function to handle deleting an application by its ID.
+    // Handles deleting an application by its ID.
     const handleDeleteApplication = async (id) => {
         const confirmed = window.confirm(
             "Are you sure you want to delete this application?"
@@ -72,6 +73,29 @@ function App() {
         }
     };
 
+    // Function to handle editing an application by setting the applicationToEdit state.
+    const handleEditApplication = (application) => {
+        setApplicationToEdit(application);
+    };
+
+    // Function to handle updating an application after editing.
+    const handleApplicationUpdated = (updatedApplication) => {
+        setApplications((currentApplications) =>
+            currentApplications.map((application) =>
+                application.id === updatedApplication.id
+                    ? updatedApplication
+                    : application
+            )
+        );
+
+        setApplicationToEdit(null);
+    };
+
+    // Function to handle canceling the edit operation.
+    const handleCancelEdit = () => {
+        setApplicationToEdit(null);
+    };
+
     //======================================================================
     return (
         <div className="app">
@@ -79,6 +103,9 @@ function App() {
 
             <ApplicationForm 
                 onApplicationAdded={handleApplicationAdded}
+                applicationToEdit={applicationToEdit}
+                onApplicationUpdated={handleApplicationUpdated}
+                onCancelEdit={handleCancelEdit}
             />
 
             <p>
@@ -102,6 +129,12 @@ function App() {
                                 </p>
                             )}
                             
+                            <button
+                                onClick={() => handleEditApplication(application)}
+                            >
+                                Edit
+                            </button>
+
                             <button
                                 onClick={() => handleDeleteApplication(application.id)}
                             >
